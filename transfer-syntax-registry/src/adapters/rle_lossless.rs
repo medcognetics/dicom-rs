@@ -96,15 +96,14 @@ impl PixelDataReader for RleLosslessAdapter {
                     // LSB R channel: 0,  6, 12, ...
                     // MSB G channel: 3,  9, 15, ...
                     // LSB G channel: 2,  8, 14, ...
-                    // MSB G channel: 5, 11, 17, ...
-                    // LSB G channel: 4, 10, 16, ...
+                    // MSB B channel: 5, 11, 17, ...
+                    // LSB B channel: 4, 10, 16, ...
                     let frame_start = i * frame_size;
+                    // Segment `byte_offset` 0 holds the most significant byte,
+                    // which is last in little endian sample order.
                     let start = frame_start
-                        + if samples_per_pixel == 3 {
-                            sample_number * bytes_per_sample + byte_offset
-                        } else {
-                            sample_number * bytes_per_sample + samples_per_pixel - byte_offset
-                        };
+                        + sample_number * bytes_per_sample
+                        + (bytes_per_sample - 1 - byte_offset);
 
                     let end = (i + 1) * frame_size;
                     for (decoded_index, dst_index) in (start..end)
@@ -202,11 +201,9 @@ impl PixelDataReader for RleLosslessAdapter {
                     .unwrap();
 
                 // Interleave pixels as described in the example above.
-                let start = if samples_per_pixel == 3 {
-                    sample_number * bytes_per_sample + byte_offset
-                } else {
-                    sample_number * bytes_per_sample + samples_per_pixel - byte_offset
-                };
+                // Segment `byte_offset` 0 holds the most significant byte,
+                // which is last in little endian sample order.
+                let start = sample_number * bytes_per_sample + (bytes_per_sample - 1 - byte_offset);
 
                 let end = frame_size;
                 for (decoded_index, dst_index) in (start..end)
